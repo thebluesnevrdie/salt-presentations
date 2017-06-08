@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>A Hands-on Intro to SaltStack</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif);
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body {
+      font-family: 'Droid Serif';
+      }
+      h1, h2, h3 {
+      font-family: 'Yanone Kaffeesatz';
+      font-weight: 400;
+      margin-bottom: 0;
+      }
+      .remark-slide-content h1 { font-size: 3em; }
+      .remark-slide-content h2 { font-size: 2em; }
+      .remark-slide-content h3 { font-size: 1.6em; }
+      .footnote {
+      position: absolute;
+      bottom: 3em;
+      }
+      li p { line-height: 1.25em; }
+      .red { color: #fa0000; }
+      .large { font-size: 2em; }
+      a, a > code {
+      color: rgb(249, 38, 114);
+      text-decoration: none;
+      }
+      code {
+      background: #e7e8e2;
+      border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-code-line-highlighted     { background-color: #373832; }
+      .pull-left {
+      float: left;
+      width: 47%;
+      }
+      .pull-right {
+      float: right;
+      width: 47%;
+      }
+      .pull-right ~ p {
+      clear: both;
+      }
+      #slideshow .slide .content code {
+      font-size: 0.8em;
+      }
+      #slideshow .slide .content pre code {
+      font-size: 0.9em;
+      padding: 15px;
+      }
+      .inverse {
+      background: #272822;
+      color: #777872;
+      text-shadow: 0 0 20px #333;
+      }
+      .inverse h1, .inverse h2 {
+      color: #f3f3f3;
+      line-height: 0.8em;
+      }
+
+      /* Slide-specific styling */
+      #slide-inverse .footnote {
+      bottom: 12px;
+      left: 20px;
+      }
+      #slide-how .slides {
+      font-size: 0.9em;
+      position: absolute;
+      top:  151px;
+      right: 140px;
+      }
+      #slide-how .slides h3 {
+      margin-top: 0.2em;
+      }
+      #slide-how .slides .first, #slide-how .slides .second {
+      padding: 1px 20px;
+      height: 90px;
+      width: 120px;
+      -moz-box-shadow: 0 0 10px #777;
+      -webkit-box-shadow: 0 0 10px #777;
+      box-shadow: 0 0 10px #777;
+      }
+      #slide-how .slides .first {
+      background: #fff;
+      position: absolute;
+      top: 20%;
+      left: 20%;
+      z-index: 1;
+      }
+      #slide-how .slides .second {
+      position: relative;
+      background: #fff;
+      z-index: 0;
+      }
+      </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+background-image: url(saltstack-blue.png)
+#A Hands-on Intro to SaltStack
+
+???
+
+* Go to DigitalOcean -> Create Droplet -> One-click apps tab
+```
+apt-get -y install emacs-nox screen
+export DO_HOST='10.11.12.13'
+scp -r ~/SaltMeetup/New-Intro/demo/Dockerfiles/* root@${DO_HOST}:/root/
+docker build -t cody:base /root/base/
+docker build -t cody:salt /root/salt/
+```
+
+---
+template: inverse
+
+##About Me
+###Cody Crawford
+`https://www.linkedin.com/in/codyc`
+* Used Puppet and Chef in production environments for approximately eight months
+* Started using Salt in December 2012
+* Organized the Austin SaltStack MeetUp in June 2014
+* Salt is the best configuration management tool
+
+![Meetup logo](meetup_logo.png)
+
+???
+
+* First version I recall using was 0.10.5
+* Proof of concept to production rollout was one week
+* We meet the last Wed evening of each month, trying a second north meeting
+* I'm biased, but Salt is the best operational config management tool
+* We are almost completely moved to containers at my day job, so demos will be leveraging containers.
+
+---
+template: inverse
+
+##Organizational Overview
+
+* Created by Thomas S. Hatch in March of 2011
+* Code repository is at `https://github.com/saltstack`
+* Corporate site is at `https://saltstack.com`
+* Developed under the Apache 2.0 license
+* Annual conference called SaltConf (1st was in Jan. 2014)
+* Certification: SaltStack Certified Engineer (SSCE)
+* Corporate entity is based in Lehi, Utah
+* FOSS and community aspects are first priority
+
+![Tom Hatch](thomas-hatch.png)
+
+???
+
+* I've met and discussed Salt with Tom Hatch
+* I attended my first SaltConf last year (April 2016)
+* No "sign this contract so we can sell your code contibutions"
+
+---
+template: inverse
+
+##Organizations using Salt
+
+![Harvard Univ Logo](harvard_logo.png)
+![LinkedIn Logo](linkedin_logo.jpg)
+![Rackspace Logo](rackspace_logo.png)
+![Columbia Univ Logo](columbia_logo.jpg)
+![Photobucket Logo](photobucket_logo.png)
+![Clemson Univ Logo](clemson_logo.png)
+![Hulu Logo](hulu_logo.jpg)
+![SAIC Logo](saic_logo.png)
+![Comcast Logo](comcast_logo.jpg)
+![Cars.com Logo](carsdotcom_logo.png)
+![Salesforce Logo](salesforce_logo.jpg)
+![CloudFlare Logo](cloudflare_logo.png)
+![Zillow Logo](zillow_logo.png)
+
+???
+
+* LinkedIn was a very early adopter and the biggest user by far
+* HP Cloud Services
+* Visa
+* Nasa JPL
+* These are just the household names, tons of small companies
+
+---
+template: inverse
+background-image: url(saltstack-logo.png)
+
+##Software Overview
+
+* Remote execution engine at core
+* Written in Python, configuration in YAML or JSON with choice of templating
+* Built-in pub-sub middleware: ZeroMQ with msgpack and AES
+* Server listens on TCP ports 4505 and 4506
+
+###Terminology
+
+* **Master**:
+    * Salt server
+* **Minion**:
+    * Salt client
+* **Syndic**:
+    * Minon to Master proxy
+* **Grains**:
+    * Data specific to each Minion
+* **Pillars**:
+    * Global data
+* **States**:
+    * Configuration management
+
+
+???
+
+* Other features: config mgmt, service orchestration
+* Next-gen pub-sub is called RAET - must use exclusive of each other
+* a node can be both master and minion
+* the node id is not the same as hostname
+* Grains - "ask"
+* Pillar - "tell"
+* Demo: install client with local file only
+```
+docker run --name test1 -ti debian:cody
+```
+  * Packages page: https://repo.saltstack.com/
+  * Install using bootstrap script
+```
+curl -L https://bootstrap.saltstack.com -o bootstrap-salt.sh
+sh bootstrap-salt.sh -P stable 2016.3
+/etc/init.d/salt-minion stop
+cat << EOF > /etc/salt/minion
+state_verbose: True
+log_level: debug
+file_client: local
+EOF
+```
+  * Install from the packages page
+```
+curl -L http://repo.saltstack.com/apt/debian/7/amd64/2016.3/SALTSTACK-GPG-KEY.pub | apt-key add -
+echo "deb http://repo.saltstack.com/apt/debian/7/amd64/2016.3 wheezy main" > /etc/apt/sources.list.d/saltstack.list
+apt-get update ; apt-get -y install salt-minion
+```
+---
+template: inverse
+
+##Data Structures
+###Grains
+
+* Data collected from the host system
+* Show all grains with: `salt-call -g` or `salt 'host.example.com' grains.items`
+* Grains can be used in templates, targeting at the cli and in the top file
+
+###Pillars
+* Free-form, global data store
+* Data is only available to each minion that requires it
+* Example:
+```yaml
+colors:
+  - red
+  - blue
+  - green
+users:
+  joe: 4
+  bob: 8
+  tom: 3
+```
+
+???
+
+* Grains:
+  * The minion I ran it on had 62 lines
+  * Custom grains are easy to write
+  * I wrote custom grains for our network zones and DC names
+* Pillars:
+  * Can be backed by:
+    * JSON/YAML output from a command
+    * SQL database
+    * LDAP
+    * VM hypervisors
+    * Etcd cluster
+* Demo: Install master and configure several minions to connect
+* List keys: `salt-key -L`
+* Accept all keys: `salt-key -A`
+* Default states dir: `/srv/salt`
+* Default pillar dir: `/srv/pillar`
+```
+mkdir /srv/pillar
+cat << EOF > /srv/pillar/top.sls
+base:
+  '*':
+    - data
+    - users
+EOF
+cat << EOF > /srv/pillar/data.sls
+colors:
+  - red
+  - blue
+  - green
+EOF
+cat << EOF > /srv/pillar/users.sls
+users:
+  joe: 4
+  bob: 8
+  tom: 3
+EOF
+salt '*' saltutil.refresh_pillar	
+salt '*' pillar.items
+salt '*' pillar.get users:joe
+```
+
+---
+template: inverse
+
+##Remote Execution
+
+* Can be run from the Master with `salt '*'` or a Minion with `salt-call`
+* Refer to the [Execution modules index](https://docs.saltstack.com/en/latest/ref/modules/all/index.html)
+* Outdated info on the web that simply refers to Salt as as remote execution engine and nothing more
+
+##Targeting
+
+* Specifying which minions should run a command or execute a state
+* Examples by method:
+  * Grains: `salt -G 'os:Fedora' test.ping`
+  * Globbing:
+      * `salt '*.example.net' test.ping`
+      * `salt 'web[1-5]' test.ping`
+  * Regex: `salt -E 'web1-(prod|devel)' test.ping`
+  * Lists: `salt -L 'web1,web2,web3' test.ping`
+  * Pillar: `salt -I 'somekey:specialvalue' test.ping`	
+  * Subnet/IP: `salt -S 10.0.0.0/24 test.ping`
+  * Compound:
+
+`salt -C 'webserv* and G@os:Debian or E@web-dc1-srv.*' test.ping`
+
+???
+
+```
+$ salt 'test1*' timezone.get_zone
+
+test1.example.com:
+    America/Denver
+
+$ salt 'test1*' timezone.set_zone 'Etc/UTC'
+
+test1.example.com:
+    True
+
+$ salt '*' network.ip_addrs
+
+test1.example.com:
+    - 10.11.12.13
+    - 208.67.220.220
+test2.example.com:
+    - 10.10.10.1
+    - 208.67.222.222
+
+$ salt '*' cmd.run 'uname -a'
+
+test1.example.com:
+    Linux test1 3.2.0-4-amd64 #1 SMP Debian 3.2.57-3+deb7u2 x86_64 GNU/Linux
+test2.example.com:
+    Linux test2 3.2.0-4-amd64 #1 SMP Debian 3.2.51-1 x86_64 GNU/Linux
+```
+
+---
+template: inverse
+
+##States
+
+* States are how config management in Salt is defined
+* Describe in YAML the final state you want the system to be in
+* States files use the .sls suffix
+
+![State Components](state_components_diagram.png)
+
+???
+
+* `salt '*' state.apply`
+
+---
+template: inverse
+
+##States, cont.
+
+Example:
+
+```yaml
+rsync:
+  service:
+    - running
+    - enable: True
+    - require:
+      - file: /etc/rsyncd.conf
+      - file: /etc/default/rsync
+      - pkg: rsync
+  pkg:
+    - installed
+```
+
+* The [States module index](https://docs.saltstack.com/en/latest/ref/states/all/index.html) is your reference
+* Wrappers for execution modules
+* use .sls suffix
+* includes are `<state>.sls` or `<state>/init.sls`
+* idea is to document what the final state of the node should be
+* can be written in raw Python
+* Six kinds of requisites: require, watch, prereq, use, onchanges, and onfail
+* An entire state file can be a requisite
+* IDs must be unique
+
+---
+template: inverse
+
+##Templating
+
+* Jinja, Mako, and Wempy templating engines can be used
+* Templates can be used in state files, managed files, pillars
+* The ["Template Designer Documentation"](http://jinja.pocoo.org/docs/2.9/templates/) is your Jinja2 reference
+	    
+Example state file using Jinja templating with Pillar data:
+
+```yaml
+{% for user, prefs in pillar['users'].iteritems() %}
+{{ user }}:
+  user:
+    - present
+    - home: /home/{{ user }}
+    - shell: /bin/{{ prefs.shell }}
+    - gid_from_name: True
+{% if (prefs.admin == True) %}
+    - groups:
+      - sudo
+    - require:
+      - pkg: sudo
+{% endif %}
+{% endfor %}
+```
+
+???
+
+* States, Pillars, and managed files can utilize templates
+
+---
+template: inverse
+
+##Extended Demo
+
+* Running a Salt Master with GitFS backend to Gogs all in containers?
+
+???
+
+/srv/pillar/top.sls:
+```yaml
+base:
+  '*':
+    - default
+```
+
+/srv/salt/top.sls:
+```yaml
+base:
+  '*':
+    - core
+    - aux
+```
+
+---
+template: inverse
+
+##Advanced Topics
+
+* Custom Grains, Modules, States
+* Formulas
+* salt-cloud
+* salt-ssh
+* Reactor System
+* Salt Mine
+* Salt Virt
+* Proxy Minions
+* Orchestration
+* Salt Engines
+* Using [Augeas](http://augeas.net/) with Salt
+
+???
+
+* Custom Grains, Modules, States: just add Python code to _grains, _modules, _states directories
+* salt-cloud: provision cloud providers such as AWS, DO, Openstack, etc.
+* salt-ssh: agentless salt runs
+* Reactor: when x happens, run y
+* Mine: collect data from Minions at the Master
+* Virt: manage VM hypervisors
+* Proxy Minions: connect Master to devices that can't run a Minion
+* Orchestrate Runner: service orchestration
+
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    <script>
+      var hljs = remark.highlighter.engine;
+    </script>
+    <script src="remark.language.js"></script>
+    <script>
+      var slideshow = remark.create({
+      highlightStyle: 'monokai',
+      highlightLanguage: 'remark',
+      highlightLines: true
+      }) ;
+    </script>
+  </body>
+</html>
