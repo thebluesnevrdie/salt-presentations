@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="UTF-8">
+    <title>Traffic Light JS</title>
+    <style>
+      .traffic-light {
+        text-align: center;
+        color: #1abc9c;
+        font-size: 16px;
+        height: 620px;
+        width: 200px;
+        float: left;
+        background-color: #333;
+        border-radius: 40px;
+        margin: 30px 20px;
+        padding: 20px;
+      }
+
+      .bulb {
+        height: 150px;
+        width: 150px;
+        background-color: #111;
+        border-radius: 50%;
+        margin: 25px auto;
+        transition: background 500ms;
+      }
+    </style>
+  </head>
+  <body>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+    <script>
+      var minions = {
+        {{ minionlist }}
+      };
+
+      function clearLights(minion) {
+        $("#" + minion + " > .bulb").each(function() {
+          $(this).css("background-color", "black");
+        });
+      }
+
+      function checkSite(name,addr) {
+        clearLights();
+        $.ajax("http://" + addr + "/test/", {
+          type: "GET",
+          statusCode: {
+            200: function (response) {
+	      $("#" + name + "-goLight").css("background-color", "green");
+            },
+            503: function (response) {
+	      $("#" + name + "-slowLight").css("background-color", "yellow");
+            },
+            404: function (response) {
+	      $("#" + name + "-stopLight").css("background-color", "red");
+            }
+          },
+        });
+      }
+
+      function drawLights() {
+        for (var minion in minions) {
+          if (minions.hasOwnProperty(minion)) {
+            $("body").append('<div class="traffic-light" id="' + minion + '">' +
+                             '<h1>' + minion + '</h1>' +
+                             '<div id="' + minion + '-stopLight" class="bulb"></div>' +
+                             '<div id="' + minion + '-slowLight" class="bulb"></div>' +
+                             '<div id="' + minion + '-goLight" class="bulb"></div>' +
+                             '</div>');
+            clearLights(minion);
+          }
+        }
+      }
+
+      drawLights();
+    </script>
+  </body>
+</html>
