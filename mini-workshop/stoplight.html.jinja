@@ -33,7 +33,7 @@
     <script>
       var minions = {
 {%- set minions = salt['mine.get']('*', 'network.ip_addrs') %}
-{%- for server, addr in (minions|dictsort).items() %}
+{%- for server, addr in minions|dictsort %}
         "{{ server }}": "{{ addr|last }}"{{ "," if not loop.last else "" }}
 {%- endfor %}
       };
