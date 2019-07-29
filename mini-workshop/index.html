@@ -14,11 +14,11 @@ However, we're going to use a quick, catch-all method to install Salt at the mom
 
     wget -O - https://bootstrap.saltstack.com | sh -s -- -PLM -A localhost
 
-The bootstrap script will detect the OS, and take the appropriate action to install Salt. On the line above, we've included an option to tell the Minion to use this host as its Master. However, Salt uses a key system to allow Master-Minion communication. This can be handled manually using a helper command. Run the command below to see the state of the keys the Master knows about:
+The bootstrap script will detect the OS, and take the appropriate action to install Salt. On the line above, we've included an option to tell the Minion to use this host as its Master. However, Salt uses a key system to allow Master-Minion communication. This can be handled manually using a helper command. Run the command below to see the state of the keys the Master knows about. (You may have to run this a number of times.) You should see the Minion name for this host show up under the "Unaccepted Keys" section.
   
     salt-key
 
-You should see the Minion name for this host under the "unaccepted" section. Run the following to accept that key:
+Run the following to accept that key:
   
     salt-key -a $HOSTNAME
 
@@ -32,13 +32,13 @@ In the commands above, the second field is the target. We're using globbing to m
 
     ss -ltnp | grep salt
 
-Notice there are two for the master process, but only the Salt Master. There are none for the Minion process because the Minions always initiate the TCP connection to the Master.
+Notice there are two for the Master process, but only the Salt Master. There are none for the Minion process because the Minions always initiate the TCP connection to the Master.
 
 When we ran the "test" commands above, we were using Remote Execution. In SaltStack, we define **Remote Execution as real-time information gathering and actions taken on an _ad-hoc_ grouping of targets**. In this case, our target is simply the local Minion. Let's try some more useful examples of Remote Execution:
   
     salt-call disk.usage
     salt-call status.uptime
-    salt-call pkg.install psmisc,tmux
+    salt-call pkg.install tmux,tree
 
 In this last batch of jobs, we're using the `salt-call` command. This command is only available on a Minion, and is a quick way to initiate a job only targeting the Minion itself. Before we close out this section, let's take a look at the Jobs Cache. Try running:
 
@@ -64,6 +64,7 @@ Now let's create a State file (which by convention, has the suffix `.sls`):
 
     {% if grains.os_family == 'RedHat' %}
     {% set web_path = '/usr/share/nginx' %}
+    {% set config_path = '/etc/nginx/default.d/test.conf' %}
     open_firewall_port:
       firewalld.present:
         - name: public
@@ -71,6 +72,7 @@ Now let's create a State file (which by convention, has the suffix `.sls`):
         - services:
           - http
     {% elif grains.os_family == 'Debian' %}
+    {% set config_path = '/etc/nginx/sites-available/default' %}
     {% set web_path = '/var/www' %}
     {% endif %}
 
@@ -91,8 +93,6 @@ Now let's create a State file (which by convention, has the suffix `.sls`):
         - template: jinja
         - require:
           - install_nginx_package
-        - watch_in:
-          - nginx_running
     EOF
 
 Let's also add a template file we'll use to serve up our content with NGINX:
@@ -122,7 +122,7 @@ Now that we have these in place, let's tell the Minion to apply the NGINX state:
 
     salt-call state.apply nginx
 
-Take a moment to look through the results of the State application, then open a new browser tab, go to `http://<your instance ip>`. After you've seen the webserver running and serving up our content, re-run the State:
+Take a moment to look through the results of the State application, then open a new browser tab, go to `http://<your instance ip>`. After you've seen the webserver running and serving up our content, re-run the State exactly as you did before:
 
     salt-call state.apply nginx
 
@@ -169,7 +169,8 @@ Now let's create a profile to describe what a Minion we want to deploy would loo
 
 Before we use `salt-cloud` to deploy a Minion, let's issue a quick fix to the cloud module we're using:
 
-FIX    sed -i 's/wait_for_server_state,/wait_for_status,/' /usr/lib/python2.7/dist-packages/salt/cloud/clouds/vultrpy.py
+    wget https://raw.githubusercontent.com/thebluesnevrdie/salt-presentations/master/mini-workshop/vultrpy.py \
+         -O /usr/lib/python2.7/dist-packages/salt/cloud/clouds/vultrpy.py
 	   
 Now let's create two new Minions (we'll run with debug on to see verbose details about the progress):
 
@@ -179,7 +180,7 @@ Once the Minion deployment has completed, you'll see some details `salt-cloud` h
 
     salt-key
 
-Notice that the `salt-cloud` deployment took care of the key management for us. Go ahead and take a look at some of the Grains on all of Minions:
+Notice that the `salt-cloud` deployment took care of the key management for us. Go ahead and take a look at some of the Grains on all of the Minions:
 	   
     salt '*' grains.item os_family os osrelease
 
@@ -187,27 +188,20 @@ Let's deploy our NGINX state again, targeting all Minions:
 
     salt '*' state.apply nginx
 
-Then find the public IP addresses, so you can verify you can reach the sites:
+Find the public IP addresses, so you can verify in your browser you can reach the sites of the two new Minions:
 
-    salt -G "os:CentOS" grains.item ipv4
+    salt -G "os:CentOS" grains.item ip_interfaces
 
-The IPv4 public addresses above are a very common thing to be able to use for different config scenarios. Let's take a look at another feature within Salt that will help us to make use of values like these. The Salt Mine used is to collect arbitrary data from Minions and make that data available where needed. Add the following Salt State so we can enable this functionality:
-
-    PUBIP=$(curl -s https://ipinfo.io/ip)
+The public addresses above are a common example of information needed for different config scenarios. Let's take a look at another feature within Salt that will help us to make use of values like these. The Salt Mine is used to collect arbitrary data from Minions and make that data available where needed. Add the following Salt State so we can enable this functionality:
 
     cat << EOF > /srv/salt/mine.sls
     # -*- coding: utf-8; mode:yaml; tab-width:2; indent-tabs-mode:nil; -*-
     # vim: syntax=yaml ts=2 sw=2 sts=2 et si ai
 
-    Remove consolidated config:
-      file.absent:
-        - name: /etc/salt/minion
-
-    Extra options:
+    Mine options:
       file.managed:
-        - name: /etc/salt/minion.d/extra.conf
+        - name: /etc/salt/minion.d/mine.conf
         - contents:
-          - 'master: ${PUBIP}'
           - 'mine_interval: 2'
           - 'mine_functions:'
           - '  network.ip_addrs: []'
@@ -217,14 +211,15 @@ The IPv4 public addresses above are a very common thing to be able to use for di
         - name: 'salt-call service.restart salt-minion'
         - bg: True
         - onchanges:
-          - Remove consolidated config
-          - Extra options
+          - Mine options
     EOF
 
-The above State will remove the monolithic config `/etc/salt/minion`, as a best-practice. It will also add the configuration for the Salt Mine to expose data using the `network.ip_addrs` function (Salt can Salt itself!), and finally do a restart of the Minion daemon to pick up the config changes. Let's roll this out:
+The above State will add the configuration for the Salt Mine to expose data using the `network.ip_addrs` function (Salt can Salt itself!) If config changes are needed, it will do a restart of the Minion daemon as well. Let's roll this out:
 
     salt '*' state.apply mine
-    salt '*' mine.update
+    salt-call mine.get '*' network.ip_addrs
+
+You should have seen the public IPv4 addresses listed for all three Minions. If some are missing, give it a few seconds and run the last command above again.
 
 ## Section 4: Event-Driven Automation
 
@@ -241,14 +236,14 @@ The SaltStack event bus is a critical piece of the architecture and facilitates 
     EOF
     systemctl restart salt-minion
 
-Now let's start a ```tmux``` session so we can watch the event-bus in real time:
+Now let's start a `tmux` session so we can watch the event-bus in real time:
 
     tmux new-session -d -s salt
     tmux send-keys "salt-run state.event pretty=True"  C-m
     tmux splitw -h -p 50
     tmux attach-session -t salt
 
-You should now have a ```tmux``` session with the Salt event-bus shown on the left. Try doing a command that will generate some events:
+You should now have a `tmux` session with the Salt event-bus shown on the left. Try doing a command that will generate some events:
 
     salt-call test.ping
 	   
@@ -256,9 +251,9 @@ Now, let's try out our Beacon that we set up:
 
     echo "Salt is amazing" >> /var/www/html/index.html
 
-You should see an event on the left side where our Beacon has fired a notification of the file change. Let's do a State run to put the file back:
+You should see an event on the left side where our Beacon has fired a notification of the file change. Look for a line beginning with `salt/beacon/<minion name>/`. Let's do a State run to put the file back:
 
-    salt '*' state.apply nginx
+    salt-call state.apply nginx
 
 A Reactor in Salt will consume specific events from the event-bus and prescribe action to take. Use the following to associate our file change event to a Reactor we will create:
 
@@ -280,55 +275,189 @@ Now we'll create the Reactor itself to direct Salt what to do when the event is 
     EOF
     systemctl restart salt-master
 
-The Reactor we just created will cause a State run using the NGINX state on the Minion the event was received. Try the following (one-at-a-time) to see it in action:
+The Reactor we just created will cause a State run using the NGINX state on the Minion the event was received. Try the following (one line at a time) to see it in action:
 
     grep title /var/www/html/index.html
-    sed -i 's/Welcome/Go Away/' /var/www/html/index.html
+    sed -i 's/Welcome/Go Away/' /var/www/html/index.html ; grep title /var/www/html/index.html
     grep title /var/www/html/index.html
 		  
-The above ```sed``` replaced our "Welcome" title with "Go Away". You should see Salt change it back before you can even run the second ```grep``` command. To exit ```tmux```, use ```Ctrl-b d```. Kill the ```tmux``` session before we move on:
+The above `sed` replaced our "Welcome" title with "Go Away". You should see Salt change it back by the time you run the third `grep` command. Kill the `tmux` session before we move on:
 
     tmux kill-session -t salt
 
 ## Section 5: Orchestration
 
-**Orchestration in SaltStack is a list of discrete, ordered steps to describe a process** (even across nodes).
+In this final section, we'll look at an Orchestration example. Orchestration in SaltStack is a higher-level construct above the Remote Execution, Config Management, and Cloud Management capabilites that we've already taken a look at. We define it as **a list of discrete, ordered steps to describe a process** (even across nodes). To create a running environment that we can demonstrate Orchestration, let's add to our NGINX State file that we previously created:
 
-    salt '*' file.write /tmp/stoplight black
+    cat << EOF >> /srv/salt/nginx/init.sls
+
+    manage_default_site:
+      file.managed:
+        - name: {{ config_path }}
+        - source: salt://nginx/files/default.jinja
+        - template: jinja
+        - defaults:
+            webroot: {{ web_path }}
+        - require:
+           - install_nginx_package
+        - watch_in:
+          - nginx_running
+
+    allow_all_cors:
+      file.managed:
+        - name: /etc/nginx/conf.d/cors.conf
+        - contents:
+          - "add_header 'Access-Control-Allow-Origin' * always;"
+        - watch_in:
+          - nginx_running
+    EOF
+
+We will also need to add the template that is referred to in the `manage_default_site` State declaration above:
+
+    cat << 'EOF' > /srv/salt/nginx/files/default.jinja
+    {%- if grains.os_family == 'Debian' -%}
+    server {
+            listen 80 default_server;
+            root {{ webroot }}/html;
+            server_name _;
+
+            location / {
+                try_files $uri $uri/ =404;
+            }
+    {% endif %}
+            location /test/ {
+                if (-f $document_root/maintenance.html) {
+                    return 503;
+                }
+                try_files /test.html =404;
+            }
+    {{ "}" if grains.os_family == 'Debian' else "" }}
+    EOF
+
+Go ahead and run our NGINX State again to get these new changes deployed on all of our Minions:
+
+    salt '*' state.apply nginx
+
+This will have added the `/test/` location to our webserver config. If you try it now, you should see that you get a 404, which is expected at this point. This new location is designed to return a 200 if the file `test.html` exists, a 404 if it does not, and a 503 if the file `maintenance.html` exists. To help us visualize this on each of our Minions, let's add a new page on the Salt Master that serves as a status indicator:
+	   
+    cat << EOF > /srv/salt/stoplight.sls
+    # -*- coding: utf-8; mode:yaml; tab-width:2; indent-tabs-mode:nil; -*-
+    # vim: syntax=yaml ts=2 sw=2 sts=2 et si ai
+
+    stoplight_file:
+      file.managed:
+        - name: /var/www/html/stoplight.html
+        - source: https://raw.githubusercontent.com/thebluesnevrdie/salt-presentations/master/mini-workshop/stoplight.html.jinja
+        - source_hash: 5784da3fd56d639c6bcecccc415c742dc8f8f99cbc420534c3d55e799a228505
+        - template: jinja
+    EOF
+
+Deploy our stoplight status page with:
+
+    salt-call state.apply stoplight
+
+Open up a new tab in your browser and go to go to `http://<your instance ip>/stoplight.html`. You should see one stoplight representing each of your Minions, and they should all be red. To understand this fully, take a moment to run each of the following commands line-by-line and watch the stoplight status page for changes:
+
+    touch /var/www/html/test.html
+    touch /var/www/html/maintenance.html
+    rm /var/www/html/{maintenance,test}.html
+
+We saw the use of a Runner earlier, and Orchestration is just a special class of Runner. Orchestrations (otherwise known as the Orchestrate Runner) in Salt can even include other Runners. Let's add a small State to both add the `test.html` file and remove the `maintenance.html` file on the Minions:
+
+    cat << EOF > /srv/salt/go-green.sls
+    # -*- coding: utf-8; mode:yaml; tab-width:2; indent-tabs-mode:nil; -*-
+    # vim: syntax=yaml ts=2 sw=2 sts=2 et si ai
+
+    {% if grains.os_family == 'RedHat' %}
+    {% set web_path = '/usr/share/nginx' %}
+    {% elif grains.os_family == 'Debian' %}
+    {% set web_path = '/var/www' %}
+    {% endif %}
+
+    create_test_file:
+      file.touch:
+        - name: {{ web_path }}/html/test.html
+
+    remove_maintenance_file:
+      file.absent:
+        - name: {{ web_path }}/html/maintenance.html
+        - require:
+          - create_test_file
+
+    sleep_for_two:
+      module.run:
+        - name: test.sleep
+        - test.sleep:
+        - length: 2
+        - require:
+          - remove_maintenance_file
+    EOF
+
+By convention, Orchestrate Runners are placed in a subdirectory of our Salt file-root called `orch`. Create that now:
 
     mkdir /srv/salt/orch
-    cat << EOF > /srv/salt/orch/stoplight.sls
-    {% set servers = salt.saltutil.runner('cache.grains',tgt='kernel:Linux',tgt_type='grain') %}
 
-    {% for color in ['red','yellow','green'] %}
-    {% for node in servers %}
-    update_stoplight_to_{{ color }}_on_{{ node }}:
+Now let's add an Orchestration to make the status change on the `/test/` location one Minion at a time:
+
+    cat << EOF > /srv/salt/orch/stoplight.sls
+    # -*- coding: utf-8; mode:yaml; tab-width:2; indent-tabs-mode:nil; -*-
+    # vim: syntax=yaml ts=2 sw=2 sts=2 et si ai
+
+    {% set minions = salt.saltutil.runner('cache.grains',tgt='*') %}
+
+    {% for node, grains in minions|dictsort %}
+    {% if grains['os_family'] == 'RedHat' %}
+    {% set web_path = '/usr/share/nginx' %}
+    {% elif grains['os_family'] == 'Debian' %}
+    {% set web_path = '/var/www' %}
+    {% endif %}
+
+    update_stoplight_to_yellow_on_{{ node }}:
       salt.function:
-        - name: file.write
+        - name: file.touch
         - tgt: {{ node }}
         - arg:
-          - /tmp/stoplight
-          - {{ color }}
+          - {{ web_path }}/html/maintenance.html
 
-    stoplight_timer_for_{{ color }}_on_{{ node }}:
+    stoplight_timer_for_yellow_on_{{ node }}:
       salt.function:
         - tgt: {{ node }}
         - name: test.sleep
         - kwarg:
             length: 2
         - require:
-          - salt: update_stoplight_to_{{ color }}_on_{{ node }}
-    {% endfor %}
+          - salt: update_stoplight_to_yellow_on_{{ node }}
+
+    update_stoplight_to_green_on_{{ node }}:
+      salt.state:
+        - tgt: {{ node }}
+        - sls: go-green
+        - require:
+          - salt: stoplight_timer_for_yellow_on_{{ node }}
+
+    update_stoplight_to_red_on_{{ node }}:
+      salt.function:
+        - name: file.remove
+        - tgt: {{ node }}
+        - arg:
+          - {{ web_path }}/html/test.html
+        - require:
+          - salt: update_stoplight_to_green_on_{{ node }}
+
+    stoplight_timer_for_red_on_{{ node }}:
+      salt.function:
+        - tgt: {{ node }}
+        - name: test.sleep
+        - kwarg:
+    	length: 2
+        - require:
+          - salt: update_stoplight_to_red_on_{{ node }}
     {% endfor %}
     EOF
 
-On each Minion, let's monitor our file:
+Start the Orchestration above, and watch the stoplight page as it runs:
 
-    watch -n.5 cat /tmp/stoplight
-	   
-Now let's run our orchestration above:
-	  
-    salt-run state.orchestrate orch.stoplight		  
+    salt-run state.orchestrate orch.stoplight
 </xmp>
 <script src="https://strapdownjs.com/v/0.2/strapdown.js"></script>
 </html>
