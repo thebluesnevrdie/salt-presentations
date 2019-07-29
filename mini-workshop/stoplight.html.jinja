@@ -45,7 +45,6 @@
       }
 
       function checkSite(name,addr) {
-        clearLights();
         $.ajax("http://" + addr + "/test/", {
           type: "GET",
           statusCode: {
@@ -59,7 +58,7 @@
 	      $("#" + name + "-stopLight").css("background-color", "red");
             }
           },
-        });
+        cache: false});
       }
 
       function drawLights() {
@@ -76,7 +75,17 @@
         }
       }
 
+      function checkAll() {
+        for (var minion in minions) {
+          if (minions.hasOwnProperty(minion)) {
+            clearLights(minion);
+            checkSite(minion,minions[minion]);
+          }
+        }
+      }
+
       drawLights();
+      setInterval(checkAll, 1000);
     </script>
   </body>
 </html>
