@@ -449,7 +449,7 @@ Now let's add an Orchestration to make the status change on the `/test/` locatio
         - tgt: {{ node }}
         - name: test.sleep
         - kwarg:
-    	length: 2
+            length: 2
         - require:
           - salt: update_stoplight_to_red_on_{{ node }}
     {% endfor %}
