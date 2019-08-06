@@ -347,8 +347,8 @@ This will have added the `/test/` location to our webserver config. If you try i
     stoplight_file:
       file.managed:
         - name: /var/www/html/stoplight.html
-        - source: https://raw.githubusercontent.com/thebluesnevrdie/salt-presentations/master/mini-workshop/stoplight.html.jinja
-        - source_hash: 5784da3fd56d639c6bcecccc415c742dc8f8f99cbc420534c3d55e799a228505
+        - source: https://thebluesnevrdie.github.io/salt-presentations/mini-workshop/stoplight.html.jinja
+        - source_hash: b3039a4fbb8e5f16e2cc25b93610b68480bac47db17278b9461c27afbfda6cb2
         - template: jinja
     EOF
 
@@ -356,7 +356,7 @@ Deploy our stoplight status page with:
 
     salt-call state.apply stoplight
 
-Open up a new tab in your browser and go to go to `http://<your instance ip>/stoplight.html`. You should see one stoplight representing each of your Minions, and they should all be red. To understand this fully, take a moment to run each of the following commands line-by-line and watch the stoplight status page for changes:
+Open up a new tab in your browser and go to `http://<your instance ip>/stoplight.html`. You should see one stoplight representing each of your Minions, and they should all be red. To understand this fully, take a moment to run each of the following commands line-by-line and watch the stoplight status page for changes:
 
     touch /var/www/html/test.html
     touch /var/www/html/maintenance.html
@@ -458,6 +458,14 @@ Now let's add an Orchestration to make the status change on the `/test/` locatio
 Start the Orchestration above, and watch the stoplight page as it runs:
 
     salt-run state.orchestrate orch.stoplight
+
+For a more complex example (bonus material!), try the alternative stoplight orchestration example:
+
+    wget -O /srv/salt/orch/stoplight-alt.sls https://thebluesnevrdie.github.io/salt-presentations/mini-workshop/stoplight-alt.sls
+
+...and of course, run this in the same manner:
+
+    salt-run state.orchestrate orch.stoplight-alt
 </xmp>
 <script src="https://strapdownjs.com/v/0.2/strapdown.js"></script>
 </html>
