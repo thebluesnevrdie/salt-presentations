@@ -7,24 +7,26 @@
       .traffic-light {
         text-align: center;
         color: #1abc9c;
-        font-size: 16px;
         font-family: sans-serif;
-        height: 620px;
-        width: 200px;
+        font-size: 1.8vw;
+        height: 0;
+        width: 12%;
         float: left;
         background-color: #333;
-        border-radius: 40px;
-        margin: 30px 20px;
-        padding: 20px;
+        border-radius: 30px;
+        margin: 1% 1%;
+        padding: 1.5%;
+        padding-bottom: 42%;
       }
 
       .bulb {
-        height: 150px;
-        width: 150px;
+        height: 0;
+        width: 95%;
         background-color: #111;
         border-radius: 50%;
-        margin: 25px auto;
-        transition: background 500ms;
+        margin: 10% auto;
+        padding-bottom: 95%;
+        transition: background 250ms;
       }
     </style>
   </head>
@@ -49,13 +51,13 @@
           type: "GET",
           statusCode: {
             200: function (response) {
-	      $("#" + name + "-goLight").css("background-color", "green");
+              $("#" + name + "-go").css("background-color", "green");
             },
             503: function (response) {
-	      $("#" + name + "-slowLight").css("background-color", "yellow");
+              $("#" + name + "-slow").css("background-color", "yellow");
             },
             404: function (response) {
-	      $("#" + name + "-stopLight").css("background-color", "red");
+              $("#" + name + "-stop").css("background-color", "red");
             }
           },
         cache: false});
@@ -65,10 +67,10 @@
         for (var minion in minions) {
           if (minions.hasOwnProperty(minion)) {
             $("body").append('<div class="traffic-light" id="' + minion + '">' +
-                             '<h1>' + minion + '</h1>' +
-                             '<div id="' + minion + '-stopLight" class="bulb"></div>' +
-                             '<div id="' + minion + '-slowLight" class="bulb"></div>' +
-                             '<div id="' + minion + '-goLight" class="bulb"></div>' +
+                             minion +
+                             '<div id="' + minion + '-stop" class="bulb"></div>' +
+                             '<div id="' + minion + '-slow" class="bulb"></div>' +
+                             '<div id="' + minion + '-go" class="bulb"></div>' +
                              '</div>');
             clearLights(minion);
           }
