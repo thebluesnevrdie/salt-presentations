@@ -1,6 +1,15 @@
-This is a talk about creating custom modules in SaltStack, with the goal of building a mini weather dashboard using an eInk display on a Raspberry Pi.
 
 ![Pi Zero with Inky pHAT](https://secure.meetupstatic.com/photos/event/2/5/b/9/highres_477729657.jpeg)
+
+## Title
+**An introduction to extending SaltStack with custom modules**
+
+## Summary
+**We will show how easy it is to create and drop in custom components in SaltStack. Specifically, we will create a custom grain, execution, and state module and tie them together on our demo endpoint.**
+
+## Details
+
+This is a talk about creating custom modules in SaltStack, with the goal of building a mini weather dashboard using an eInk display on a Raspberry Pi.
 
 Below is the parts list if you want to try this out yourself:.
 
