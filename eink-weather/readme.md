@@ -1,11 +1,10 @@
 
 ![Pi Zero with Inky pHAT](https://secure.meetupstatic.com/photos/event/2/5/b/9/highres_477729657.jpeg)
 
-## Title
-**An introduction to extending SaltStack with custom modules**
+# An introduction to extending SaltStack with custom modules
 
 ## Summary
-**We will show how easy it is to create and drop in custom components in SaltStack. Specifically, we will create a custom grain, execution, and state module and tie them together on our demo endpoint.**
+We will show how easy it is to create and drop in custom components in SaltStack. Specifically, we will create a custom grain, execution, and state module and tie them together on our demo endpoint.
 
 ## Details
 
@@ -23,6 +22,5 @@ Below is the parts list if you want to try this out yourself:.
 
 At the time of this writing, the above parts totaled approximately $67 without shipping.
 
-**Note:** make sure you use a power supply with adequate amperage, or you will get SD card corruption. The Zero has pretty low consumption, so the power supply above (even with the display) should be more than enough. See the [power requirements for different models](https://www.raspberrypi.org/documentation/faqs/#pi-power) in the table here.
-
+**Note:** make sure you use a power supply with adequate amperage, or you will get random reboots and/or SD card corruption. The Zero has pretty low consumption, so the power supply above (even with the display) should be more than enough. See the [power requirements for different models](https://www.raspberrypi.org/documentation/faqs/#pi-power) in the table.
 

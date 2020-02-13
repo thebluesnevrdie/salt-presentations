@@ -1,16 +1,15 @@
 ![Salt Farmer](https://secure.meetupstatic.com/photos/event/4/c/e/7/highres_479479687.jpeg)
 
-## Title
-**A Mini-Workshop For SaltStack Beginners**
+# A Mini-Workshop For SaltStack Beginners
 
 ## Summary
-**Bring a notebook computer! This will be a guided, hands-on lab for those new to SaltStack where we will quickly get an environment running and using examples, cover the five tenets:**
+Bring a notebook computer! This will be a guided, hands-on lab for those new to SaltStack where we will quickly get an environment running and using examples, cover the five tenets:
 
-* **Remote Execution**
-* **Config Management**
-* **Orchestration**
-* **Cloud Management**
-* **Event-driven Automation**
+* Remote Execution
+* Config Management
+* Orchestration
+* Cloud Management
+* Event-driven Automation
 
 ## Details
 
