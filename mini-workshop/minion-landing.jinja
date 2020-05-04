@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css"/>
+    <title>{{ grains['id'] }} Landing Page</title>
+    <style type="text/css" media="screen">
+      #imgcenter {
+	  margin-left: auto;
+	  margin-right: auto;
+	  display: block;
+	  margin-bottom: 30px;
+      }
+      
+      div {
+	  border: 1px solid #ccc;
+	  background: #efefef;
+	  padding: 20px;
+	  width: 50%;
+	  margin: auto;
+      }
+      
+      div p {
+	  margin-top: 0;
+	  margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="https://enterprise.saltstack.com/images/SaltStack_logo_blk_500px.png" alt="SaltStack logo" id="imgcenter"/>
+    <div>
+      <p>Hello!  This is being served from:</p>
+      <p><strong>{{ grains['id'] }}</strong></p>
+      <p>with kernel:</p>
+      <p><strong>{{ grains['kernelrelease'] }}</strong></p>
+    </div>
+  </body>
+</html>
