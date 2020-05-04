@@ -97,26 +97,7 @@ Now let's create a State file (which by convention, has the suffix `.sls`):
 
 Let's also add a template file we'll use to serve up our content with NGINX:
 
-    cat << EOF > /srv/salt/nginx/files/index.html.jinja
-    <html>
-      <head>
-        <title>Welcome</title>
-        <style>
-          body {
-            width: 35em;
-            margin: 0 auto;
-            font-family: Tahoma, Verdana, Arial, sans-serif;
-          }
-        </style>
-      </head>
-      <body>
-        <h2>Hello!  This is being served from:</h2>
-        <h1>{{ grains['id'] }}</h1>
-        <h2>with kernel:</h2>
-        <h1>{{ grains['kernelrelease'] }}</h1>
-      </body>
-    </html>
-    EOF
+    wget -O /srv/salt/nginx/files/index.html.jinja https://git.io/JfsPU
 
 Now that we have these in place, let's tell the Minion to apply the NGINX state:
 
@@ -461,7 +442,7 @@ Start the Orchestration above, and watch the stoplight page as it runs:
 
 For a more complex example (bonus material!), try the alternative stoplight orchestration example:
 
-    wget -O /srv/salt/orch/stoplight-alt.sls https://thebluesnevrdie.github.io/salt-presentations/mini-workshop/stoplight-alt.sls
+    wget -O /srv/salt/orch/stoplight-alt.sls https://git.io/JfsiH
 
 ...and of course, run this in the same manner:
 
